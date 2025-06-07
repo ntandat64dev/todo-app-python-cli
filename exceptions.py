@@ -1,8 +1,7 @@
 class GeneralError(Exception):
-    def __init__(self, trace):
-        message = (
-            f"Something went wrong.\n{trace}" if trace else "Something went wrong!"
-        )
+    def __init__(self, msg, trace=None):
+        message = msg if msg else "Something went wrong."
+        message = f"{message}\n{trace}" if trace else message
         super().__init__(message)
 
 

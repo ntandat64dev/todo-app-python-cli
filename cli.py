@@ -1,13 +1,14 @@
 import argparse
 import shlex
+import sys
 
 import services
-from schema import User
+from services import current_user
 
 # [TODO] - Fix: Type something right after start app, before the prompt to appear.
 
 
-global_parser = argparse.ArgumentParser()
+global_parser = argparse.ArgumentParser(exit_on_error=False)
 
 subparsers = global_parser.add_subparsers(
     title="subcommands",
@@ -15,69 +16,45 @@ subparsers = global_parser.add_subparsers(
     required=True,
 )
 
-login_parser = subparsers.add_parser("login")
+
+login_parser = subparsers.add_parser("login", exit_on_error=False)
 login_parser.add_argument("username_and_password")
+login_parser.set_defaults(func=services.login)
 
-signup_parser = subparsers.add_parser("signup")
+signup_parser = subparsers.add_parser("signup", exit_on_error=False)
 signup_parser.add_argument("username_and_password")
+signup_parser.set_defaults(func=services.sign_up)
 
-deleteuser_parser = subparsers.add_parser("deleteuser")
+deleteuser_parser = subparsers.add_parser("deleteuser", exit_on_error=False)
 deleteuser_parser.add_argument("id_or_username")
+deleteuser_parser.set_defaults(func=services.delete_user)
 
-todo_parser = subparsers.add_parser("todo")
+todo_parser = subparsers.add_parser("todo", exit_on_error=False)
 todo_parser.add_argument("-a", "--add")
+todo_parser.set_defaults(func=services.todo)
 
-current_user: User | None = None
+
 prompt = "🖕 "
 
 
-def update_prompt():
+def ensure_prompt():
     global prompt
     prompt = "🖕 " if current_user is None else f"🖕 {current_user.username}: "
 
 
 def loop():
-    global current_user
-
     while True:
-        user_input = input(prompt)
-
-        if user_input in ["exit", "quit"]:
-            break
-
-        args = global_parser.parse_args(shlex.split(user_input))
-
-        if args.command == "login":
-            if current_user:
-                print("You already logged in!")
+        try:
+            user_input = input(prompt).strip()
+            if not user_input:
                 continue
-            try:
-                current_user = services.login(args.username_and_password)
-                update_prompt()
-            except Exception as e:
-                print(e)
-
-        elif args.command == "signup":
-            try:
-                new_user = services.sign_up(args.username_and_password)
-                print(f"Added new user {new_user.username}!")
-            except Exception as e:
-                print(e)
-
-        elif args.command == "deleteuser":
-            try:
-                deleted_user = services.delete_user(args.id_or_username)
-                print(f"Deleted {deleted_user.username} successfully!")
-            except Exception as e:
-                print(e)
-
-        elif args.command == "todo":
-            if not current_user:
-                print("Please login first!")
-                continue
-            try:
-                services.todo(args, current_user=current_user)
-            except Exception as e:
-                print(e)
-
+            if user_input in ["exit", "quit"]:
+                break
+            args = global_parser.parse_args(shlex.split(user_input))
+            args.func(args)
+        except:
+            value = sys.exc_info()[1]
+            print(value)
+        else:
+            ensure_prompt()
         continue

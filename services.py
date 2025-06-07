@@ -1,3 +1,5 @@
+from re import match
+
 from pydantic import ValidationError
 from sqlalchemy import delete, exists, insert, select
 
@@ -15,13 +17,18 @@ from models import todos_table, users_table
 from schema import Todo, User
 from validation import process_error
 
+current_user: User | None = None
 
-def login(arg: str) -> User:
-    args = arg.split(":")
-    if len(args) < 2 or not args[0] or not args[1]:
-        raise InvalidArgument(arg)
 
-    username, password = args
+def login(args) -> None:
+    global current_user
+    if current_user:
+        raise GeneralError(msg="You already logged in!")
+
+    username_and_password = str(args.username_and_password)
+    if not (m := match("(.+):(.+)", username_and_password)):
+        raise InvalidArgument(username_and_password)
+    username, password = m.groups()
 
     with engine.begin() as conn:
         result = conn.execute(
@@ -40,18 +47,17 @@ def login(arg: str) -> User:
         if not password_matched:
             raise PasswordNotMatch
 
-        return User(
+        current_user = User(
             id=id,
             username=username,
         )
 
 
-def sign_up(arg: str) -> User:
-    args = arg.split(":")
-    if len(args) < 2 or not args[0] or not args[1]:
-        raise InvalidArgument(arg)
-
-    username, password = args
+def sign_up(args) -> None:
+    username_and_password = str(args.username_and_password)
+    if not (m := match("(.+):(.+)", username_and_password)):
+        raise InvalidArgument(username_and_password)
+    username, password = m.groups()
 
     with engine.begin() as conn:
         result = conn.execute(
@@ -74,14 +80,15 @@ def sign_up(arg: str) -> User:
         if not inserted_row:
             raise GeneralError
 
-        return User(id=inserted_row.id, username=inserted_row.username)
+        print(f"Added new user {inserted_row.username}!")
 
 
-def delete_user(arg: str) -> User:
+def delete_user(args) -> None:
+    id_or_username = str(args.id_or_username)
     try:
-        id_or_username = int(arg)
+        id_or_username = int(id_or_username)
     except:
-        id_or_username = arg
+        id_or_username = id_or_username
 
     with engine.begin() as conn:
         where_column = (
@@ -96,31 +103,30 @@ def delete_user(arg: str) -> User:
 
         user_id = result.first().id
 
-        id, username, *_ = conn.execute(
+        _, username, *_ = conn.execute(
             delete(users_table)
             .where(users_table.c.id == user_id)
             .returning(users_table)
         ).first()
 
-    return User(id=id, username=username)
+    print(f"Deleted {username} successfully!")
 
 
-def todo(args, current_user: User) -> Todo:
+def todo(args) -> None:
+    if not current_user:
+        raise GeneralError(msg="Please login first!")
+
     if args.add:
         try:
             todo = Todo.model_validate_json(args.add)
         except ValidationError as e:
             raise InvalidArgument(process_error(e, to_json=True))
 
-    todo.user_id = current_user.id
+        todo.user_id = current_user.id
 
-    with engine.begin() as conn:
-        result = conn.execute(
-            insert(todos_table).values(**todo.model_dump(exclude={"id"}))
-        )
-        id = result.inserted_primary_key
-        if not id:
-            raise GeneralError
-
-    todo.id = id
-    return todo
+        with engine.begin() as conn:
+            result = conn.execute(
+                insert(todos_table).values(**todo.model_dump(exclude={"id"}))
+            )
+            if not result.rowcount:
+                raise GeneralError
