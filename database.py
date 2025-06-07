@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 
 USERNAME = "postgres"
 PASSWORD = "postgres"
@@ -7,3 +7,7 @@ PORT = 5432
 DB_NAME = "todo-db"
 
 engine = create_engine(f"postgresql://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}")
+
+
+def ensure_database(metadata: MetaData):
+    metadata.create_all(engine, checkfirst=True)

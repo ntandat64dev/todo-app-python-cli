@@ -11,6 +11,8 @@ package-mode = false
 [tool.poetry.dependencies]
 sqlalchemy = ">=2.0.41,<3.0.0"
 psycopg2-binary = ">=2.9.10,<3.0.0"
+bcrypt = "^4.3.0"
+pydantic = "^2.11.5"
 
 
 [build-system]
