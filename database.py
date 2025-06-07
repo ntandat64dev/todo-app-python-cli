@@ -10,4 +10,5 @@ engine = create_engine(f"postgresql://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB_NA
 
 
 def ensure_database(metadata: MetaData):
+    # metadata.drop_all(engine, checkfirst=True)
     metadata.create_all(engine, checkfirst=True)

@@ -1,5 +1,8 @@
-import datetime
+from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel
+
+from models import Priority
 
 
 class User(BaseModel):
@@ -8,11 +11,11 @@ class User(BaseModel):
 
 
 class Todo(BaseModel):
-    id: int | None
+    id: int | None = None
     title: str
-    description: str | None
-    due_date: datetime.datetime | None
-    priority: int | None
-    completed: bool | None
-    created_at: datetime.datetime | None
-    user_id: int | None
+    description: str | None = None
+    due_date: datetime | None = None
+    priority: Priority | None = Priority.MEDIUM
+    completed: bool | None = False
+    created_at: datetime | None = datetime.now()
+    user_id: int | None = None

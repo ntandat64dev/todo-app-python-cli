@@ -1,4 +1,3 @@
-import json
 from pydantic import ValidationError
 from sqlalchemy import delete, exists, insert, select
 
@@ -12,8 +11,9 @@ from exceptions import (
     UsernameNotFound,
     UserNotFound,
 )
-from models import users_table
+from models import todos_table, users_table
 from schema import Todo, User
+from validation import process_error
 
 
 def login(arg: str) -> User:
@@ -105,15 +105,22 @@ def delete_user(arg: str) -> User:
     return User(id=id, username=username)
 
 
-# WIP
-def todo(option: str, argument: str, current_user: User):
-    if option == "-a":
-        if not argument:
-            raise InvalidArgument
-
+def todo(args, current_user: User) -> Todo:
+    if args.add:
         try:
-            todo = json.loads(argument, cls=Todo)
+            todo = Todo.model_validate_json(args.add)
         except ValidationError as e:
-            raise InvalidArgument(argument)
+            raise InvalidArgument(process_error(e, to_json=True))
 
-        print(todo)
+    todo.user_id = current_user.id
+
+    with engine.begin() as conn:
+        result = conn.execute(
+            insert(todos_table).values(**todo.model_dump(exclude={"id"}))
+        )
+        id = result.inserted_primary_key
+        if not id:
+            raise GeneralError
+
+    todo.id = id
+    return todo
