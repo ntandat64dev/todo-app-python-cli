@@ -130,3 +130,21 @@ def todo(args) -> None:
             )
             if not result.rowcount:
                 raise GeneralError
+
+    elif args.list:
+        with engine.begin() as conn:
+            result = conn.execute(
+                select(todos_table).where(todos_table.c.user_id == users_table.c.id)
+            )
+            columns = (
+                "ID",
+                "TITLE",
+                "DESCRIPTION",
+                "DUE DATE",
+                "PRIORITY",
+                "COMPLETED",
+                "CREATED AT",
+            )
+            utils.table_print(result, columns)
+
+    # [TODO] - Edit

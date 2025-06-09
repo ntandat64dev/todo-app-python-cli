@@ -2,8 +2,7 @@ import argparse
 import shlex
 import sys
 
-import services
-from services import current_user
+from services import *
 
 # [TODO] - Fix: Type something right after start app, before the prompt to appear.
 
@@ -19,20 +18,22 @@ subparsers = global_parser.add_subparsers(
 
 login_parser = subparsers.add_parser("login", exit_on_error=False)
 login_parser.add_argument("username_and_password")
-login_parser.set_defaults(func=services.login)
+login_parser.set_defaults(func=login)
 
 signup_parser = subparsers.add_parser("signup", exit_on_error=False)
 signup_parser.add_argument("username_and_password")
-signup_parser.set_defaults(func=services.sign_up)
+signup_parser.set_defaults(func=sign_up)
 
 deleteuser_parser = subparsers.add_parser("deleteuser", exit_on_error=False)
 deleteuser_parser.add_argument("id_or_username")
-deleteuser_parser.set_defaults(func=services.delete_user)
+deleteuser_parser.set_defaults(func=delete_user)
 
 todo_parser = subparsers.add_parser("todo", exit_on_error=False)
 todo_parser.add_argument("-a", "--add")
-todo_parser.set_defaults(func=services.todo)
+todo_parser.set_defaults(func=todo)
 
+todo_parser.add_argument("-l", "--list", action="store_true")
+todo_parser.set_defaults(func=todo)
 
 prompt = "🖕 "
 
