@@ -17,23 +17,29 @@ subparsers = global_parser.add_subparsers(
 
 
 login_parser = subparsers.add_parser("login", exit_on_error=False)
-login_parser.add_argument("username_and_password")
 login_parser.set_defaults(func=login)
+login_parser.add_argument("username_and_password")
 
 signup_parser = subparsers.add_parser("signup", exit_on_error=False)
-signup_parser.add_argument("username_and_password")
 signup_parser.set_defaults(func=sign_up)
+signup_parser.add_argument("username_and_password")
 
 deleteuser_parser = subparsers.add_parser("deleteuser", exit_on_error=False)
-deleteuser_parser.add_argument("id_or_username")
 deleteuser_parser.set_defaults(func=delete_user)
+deleteuser_parser.add_argument("id_or_username")
 
 todo_parser = subparsers.add_parser("todo", exit_on_error=False)
-todo_parser.add_argument("-a", "--add")
 todo_parser.set_defaults(func=todo)
 
+todo_parser.add_argument("-a", "--add")
 todo_parser.add_argument("-l", "--list", action="store_true")
-todo_parser.set_defaults(func=todo)
+
+edit_parser = todo_parser.add_subparsers(dest="edit", action="store_true")
+# [TODO]
+id_parser = edit_parser.add_parser("id")
+edit_parser.add_parser("title")
+edit_parser.add_parser("description")
+
 
 prompt = "🖕 "
 

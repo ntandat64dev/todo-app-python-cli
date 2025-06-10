@@ -1,7 +1,7 @@
 from re import match
 
 from pydantic import ValidationError
-from sqlalchemy import delete, exists, insert, select
+from sqlalchemy import delete, exists, insert, select, update
 
 import utils
 from database import engine
@@ -17,7 +17,7 @@ from models import todos_table, users_table
 from schema import Todo, User
 from validation import process_error
 
-current_user: User | None = None
+current_user: User | None = User(id=2, username="user1")
 
 
 def login(args) -> None:
@@ -147,4 +147,15 @@ def todo(args) -> None:
             )
             utils.table_print(result, columns)
 
-    # [TODO] - Edit
+    elif args.edit:
+        with engine.begin() as conn:
+            result = conn.execute(
+                update(todos_table)
+                .where(todos_table.c.id == args.id)
+                .values(
+                    title=args.title,
+                    description=args.description,
+                )
+            )
+            if result.rowcount != 1:
+                raise GeneralError
