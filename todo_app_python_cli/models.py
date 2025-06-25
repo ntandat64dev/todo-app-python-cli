@@ -1,4 +1,5 @@
 import enum
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -10,7 +11,6 @@ from sqlalchemy import (
     String,
     Table,
 )
-
 
 metadata = MetaData()
 
@@ -37,7 +37,7 @@ todos_table = Table(
     Column("description", String),
     Column("due_date", DateTime),
     Column("priority", Enum(Priority), nullable=False),
-    Column("completed", Boolean),
+    Column("completed", Boolean, nullable=False),
     Column("created_at", DateTime, nullable=False),
     Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
 )

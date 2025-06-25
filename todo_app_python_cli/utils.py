@@ -16,7 +16,7 @@ def check_hashed_password(plain_text_password: str, hashed_password: str) -> boo
     return checkpw(plain_text_password_bytes, password_bytes)
 
 
-# Print records as table with rich.
+# Print records as table using `rich`.
 def table_print(records: list[tuple[Any, ...]], columns: tuple[str, ...]):
     console = Console()
     table = Table(*columns, box=False)
