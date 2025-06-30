@@ -90,12 +90,16 @@ def delete_user(args) -> None:
         raise AppException("You do not have permission to delete users.", level=1)
 
     username = args.username
+
+    if username == current_user.username:
+        raise AppException("You can not delete current user.", level=1)
+
     with engine.begin() as conn:
         result = conn.execute(
             select(users_table).where(users_table.c.username == username)
         )
         if result.rowcount != 1:
-            raise AppException(f"User {username} not found.", level=1)
+            raise AppException(f"Username {username} not found.", level=1)
         conn.execute(delete(users_table).where(users_table.c.username == username))
         print(f"User '{username}' and all their TODOs have been deleted.")
 
@@ -158,10 +162,10 @@ def add_todo(args):
         print(f"TODO {inserted_todo_id}: '{todo.title}' added successfully.")
 
 
-def belongs_to_this_user(id_or_title, is_title=False):
+def belongs_to_this_user(id_or_title, can_be_title=False):
     match_todo_stm = (
-        todos_table.c.title == id_or_title
-        if is_title
+        id_or_title_statement(id_or_title)
+        if can_be_title
         else todos_table.c.id == id_or_title
     )
     with engine.begin() as conn:
@@ -178,6 +182,13 @@ def belongs_to_this_user(id_or_title, is_title=False):
             )
         )
         return result.scalar()
+
+
+def id_or_title_statement(id_or_title):
+    try:
+        return todos_table.c.id == int(id_or_title)
+    except:
+        return todos_table.c.title == str(id_or_title)
 
 
 def edit_todo(args):
@@ -210,13 +221,10 @@ def delete_todo(args):
     if not current_user:
         raise AppException("You must be logged in to delete TODOs.", level=1)
 
-    if not belongs_to_this_user(args.id_or_title, is_title=True):
+    if not belongs_to_this_user(args.id_or_title, can_be_title=True):
         raise AppException(f"TODO {args.id_or_title} not found.", level=1)
 
-    try:
-        where_stm = todos_table.c.id == int(args.id_or_title)
-    except:
-        where_stm = todos_table.c.title == str(args.id_or_title)
+    where_stm = id_or_title_statement(args.id_or_title)
 
     with engine.begin() as conn:
         conn.execute(delete(todos_table).where(where_stm))
@@ -227,13 +235,10 @@ def done_todo(args):
     if not current_user:
         raise AppException("You must be logged in to complete TODO.", level=1)
 
-    if not belongs_to_this_user(args.id_or_title, is_title=True):
+    if not belongs_to_this_user(args.id_or_title, can_be_title=True):
         raise AppException(f"TODO {args.id_or_title} not found.", level=1)
 
-    try:
-        where_stm = todos_table.c.id == int(args.id_or_title)
-    except:
-        where_stm = todos_table.c.title == str(args.id_or_title)
+    where_stm = id_or_title_statement(args.id_or_title)
 
     with engine.begin() as conn:
         conn.execute(update(todos_table).values({"completed": True}).where(where_stm))
