@@ -17,11 +17,12 @@ def check_hashed_password(plain_text_password: str, hashed_password: str) -> boo
 
 
 # Print records as table using `rich`.
-def table_print(records: list[tuple[Any, ...]], columns: tuple[str, ...]):
+def table_print(records: dict[str, Any], columns_mapping: dict[str, str]):
+    columns_length = len(columns_mapping)
     console = Console()
-    table = Table(*columns, box=False)
+    table = Table(*columns_mapping.values(), box=False)
     for record in records:
-        cells = [str(cell) for cell in record]
-        cells = cells[: len(columns)] + [""] * max(0, len(columns) - len(cells))
+        cells = [str(record[field]) for field in columns_mapping]
+        cells = cells[:columns_length] + [""] * max(0, columns_length - len(cells))
         table.add_row(*cells)
     console.print(table)
